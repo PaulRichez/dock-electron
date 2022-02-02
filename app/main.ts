@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen, Menu, Tray } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as url from 'url';
@@ -18,12 +18,18 @@ function createWindow(): BrowserWindow {
     y: 0,
     width: size.width,
     height: size.height,
+    minimizable: false,
+    maximizable: false,
+    resizable: false,
+    frame: false,
+    skipTaskbar: true,
     webPreferences: {
       nodeIntegration: true,
       allowRunningInsecureContent: (serve) ? true : false,
       contextIsolation: false,  // false if you want to run e2e test with Spectron
     },
   });
+  win.removeMenu();
 
 
   if (serve) {
@@ -37,7 +43,7 @@ function createWindow(): BrowserWindow {
     let pathIndex = './index.html';
 
     if (fs.existsSync(path.join(__dirname, '../dist/index.html'))) {
-       // Path when running electron in local folder
+      // Path when running electron in local folder
       pathIndex = '../dist/index.html';
     }
 
@@ -64,7 +70,24 @@ try {
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
   // Added 400 ms to fix the black background issue while using transparent window. More detais at https://github.com/electron/electron/issues/15947
-  app.on('ready', () => setTimeout(createWindow, 400));
+  let tray = null;
+
+  app.on('ready', () => {
+    setTimeout(createWindow, 400);
+    tray = new Tray(path.join(__dirname, '/Icon.png'));
+
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Quit',
+        click() { app.quit(); }
+      }
+    ]);
+
+    tray.setToolTip('Clipmaster');
+    tray.setContextMenu(menu);
+  });
+
+
 
   // Quit when all windows are closed.
   app.on('window-all-closed', () => {
